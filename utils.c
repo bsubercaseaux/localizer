@@ -26,55 +26,6 @@ typedef struct {
 } Point;
 
 
-
-// for pretty printing
-typedef enum {
-    BLACK,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE,
-    RESET
-} Color;
-
-const char* get_color_code(Color color) {
-    switch (color) {
-        case BLACK:   return "\033[0;30m";
-        case RED:     return "\033[0;31m";
-        case GREEN:   return "\033[0;32m";
-        case YELLOW:  return "\033[0;33m";
-        case BLUE:    return "\033[0;34m";
-        case MAGENTA: return "\033[0;35m";
-        case CYAN:    return "\033[0;36m";
-        case WHITE:   return "\033[0;37m";
-        case RESET:   return "\033[0m";
-        default:      return "\033[0m";
-    }
-}
-
-void color_printf(Color color, const char* format, ...) {
-    va_list args;
-
-    // Print the color code
-    printf("%s", get_color_code(color));
-
-    // Initialize variadic arguments
-    va_start(args, format);
-
-    // Print the formatted string
-    vprintf(format, args);
-
-    // Reset to default color
-    printf("%s", get_color_code(RESET));
-
-    // Clean up variadic arguments
-    va_end(args);
-}
-
-
 // Function prototypes
 void parse_constraints(const char* orientation_file, int* N, Constraint* constraints, int* constraint_count);
 void generate_random_assignment(int N, Point* points);
@@ -166,6 +117,67 @@ Point random_point_in_ball(Point p, double r) {
 // Calculate determinant of a 2D triangle
 double det(Point pa, Point pb, Point pc) {
     return (pc.y - pa.y) * (pb.x - pa.x) - (pc.x - pa.x) * (pb.y - pa.y);
+}
+
+// for pretty printing
+typedef enum {
+    BLACK,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    RESET
+} Color;
+
+const char* get_color_code(Color color) {
+    switch (color) {
+        case BLACK:   return "\033[0;30m";
+        case RED:     return "\033[0;31m";
+        case GREEN:   return "\033[0;32m";
+        case YELLOW:  return "\033[0;33m";
+        case BLUE:    return "\033[0;34m";
+        case MAGENTA: return "\033[0;35m";
+        case CYAN:    return "\033[0;36m";
+        case WHITE:   return "\033[0;37m";
+        case RESET:   return "\033[0m";
+        default:      return "\033[0m";
+    }
+}
+
+void color_printf(Color color, const char* format, ...) {
+    va_list args;
+
+    // Print the color code
+    printf("%s", get_color_code(color));
+
+    // Initialize variadic arguments
+    va_start(args, format);
+
+    // Print the formatted string
+    vprintf(format, args);
+
+    // Reset to default color
+    printf("%s", get_color_code(RESET));
+
+    // Clean up variadic arguments
+    va_end(args);
+}
+
+void serialize_solution(int N, Point* points, const char* output_file) {
+    FILE* file = fopen(output_file, "w");
+    if (file == NULL) {
+        printf("Error opening file\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < N; i++) {
+        fprintf(file, "%d %.6f %.6f\n", i + 1, points[i].x, points[i].y);
+    }
+
+    fclose(file);
 }
 
 

@@ -10,7 +10,7 @@ make
 ## Usage
 
 ```
-./realizer <orientation file> [sub iterations]
+./realizer <orientation file> [sub iterations] [minimum distance]
 ````
 
 The orientation file must be in the format described by the following rules:

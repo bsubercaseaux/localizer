@@ -9,7 +9,8 @@ void solve(int N,
     int constraint_count,
     int sub_iterations,
     double MIN_DIST,
-    Point* points)
+    Point* points,
+    char* output_file)
 {
     generate_random_assignment(N, points);
     clock_t start_time = clock();
@@ -77,12 +78,15 @@ void solve(int N,
     double time_elapsed = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
     color_printf(GREEN, "\n====================  SOLVED  ====================\n\n");
-    printf("Time: %.3f seconds\n", time_elapsed);
-    printf("Total iterations: %lld\n", it);
-    printf("Minimum distance: %.3f\n", min_distance);
-    printf("\nSolution:\n");
+    color_printf(YELLOW, "Time");  printf(": %.3f seconds\n", time_elapsed);
+    color_printf(YELLOW, "Total iterations"); printf(": %lld\n", it);
+    color_printf(YELLOW, "Minimum distance"); printf(": %.3f\n", min_distance);
+    color_printf(GREEN, "\nSolution:\n");
     for (int i = 0; i < N; i++) {
         printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
     }
-    printf("\n\n");
+    printf("\n");
+    
+    serialize_solution(N, points, output_file);
+    color_printf(YELLOW, "Solution saved to %s\n", output_file);
 }
