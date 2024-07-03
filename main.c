@@ -9,7 +9,7 @@
 #define MAX_CONSTRAINTS 1000
 
 void print_usage() {
-    color_printf(RED, "Usage: <orientation_file> [-s sub_iterations] [-d min_dist] [-o output_file]\n");
+    color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed]\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -23,14 +23,18 @@ int main(int argc, char* argv[]) {
     // default values
     int sub_iterations = 10;
     double min_dist = 0.25;
+    int random_seed = 42;
     char output_file[256] = "output.txt"; 
     
     // Parse optional arguments
     int opt;
-    while ((opt = getopt(argc - 1, argv + 1, "s:d:o:")) != -1) {
+    while ((opt = getopt(argc - 1, argv + 1, "i:s:d:o")) != -1) {
         switch (opt) {
-            case 's':
+            case 'i':
                 sub_iterations = atoi(optarg);
+                break;
+            case 's':
+                random_seed = atoi(optarg);
                 break;
             case 'd':
                 min_dist = atof(optarg);
@@ -43,6 +47,9 @@ int main(int argc, char* argv[]) {
                 return 1;
         }
     }
+    
+    srand(random_seed);
+    
 
     int N, constraint_count;
     Constraint constraints[MAX_CONSTRAINTS];
