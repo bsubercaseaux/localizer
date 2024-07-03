@@ -16,10 +16,11 @@ void solve(int N,
     clock_t start_time = clock();
     long long int it = 0;
 
-    int total_violations, violations_per_point[N], point_with_max_violations;
+    int total_violations = INT32_MAX; // initialize to "infinity"
+    int violations_per_point[N], point_with_max_violations;
     double min_distance;
 
-    while (true) {
+    while (total_violations > 0) {
 
         evaluate(points, N, constraints, constraint_count, MIN_DIST,
             &total_violations, violations_per_point, &point_with_max_violations, &min_distance);
