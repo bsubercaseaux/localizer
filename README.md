@@ -10,8 +10,9 @@ make
 ## Usage
 
 ```
-./realizer <orientation file> [sub iterations] [minimum distance]
+./realizer <orientation file> [sub iterations] [minimum distance] [output filename]
 ````
+(Note that arguments are positional; I should have "keys" soon, to do for instance `-o output filename`).
 
 The orientation file must be in the format described by the following rules:
 1. Each line contains an "orientation", which is of the form `<O>(<a>, <b>, <c>)`.
@@ -30,5 +31,3 @@ To use this translator, simply run
 python3 to_real_format.py <solution_file>
 ```
 This will generate `<solution_file>.or` with the desired format.
-
-`
