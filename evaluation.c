@@ -5,14 +5,11 @@
 #include "utils.c"
 
 #define EPSILON 1e-6
-#define MAX_POINTS 100
-
-
 
 // Function prototypes
 void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2);
-void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, double MIN_DIST,
-              int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance);
+void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS], double MIN_DIST,
+    int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance, int given_point, int constraint_count_given_point);
 
 void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2) {
     *min_distance = DBL_MAX;
@@ -31,8 +28,8 @@ void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2) {
     }
 }
 
-void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, double MIN_DIST,
-              int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance) {
+void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS],  double MIN_DIST,
+    int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance, int given_point, int constraint_count_given_point) {
     *total_violations = 0;
     int max_violations = 0;
     *point_with_max_violations = -1;
@@ -41,9 +38,10 @@ void evaluate(Point* points, int n, Constraint* constraints, int constraint_coun
         violations_per_point[i] = 0;
     }
 
-    for (int i = 0; i < constraint_count; i++) {
-        Constraint constraint = constraints[i];
-        
+    int n_constraints = given_point == -1 ? constraint_count : constraint_count_given_point;
+    for (int i = 0; i < n_constraints; i++) {
+        Constraint constraint =  given_point == -1 ? constraints[i] : constraints[constraints_per_point[given_point][i]];
+
         int pi = constraint.i - 1;
         int pj = constraint.j - 1;
         int pk = constraint.k - 1;
@@ -52,7 +50,7 @@ void evaluate(Point* points, int n, Constraint* constraints, int constraint_coun
         if ((constraint.sign == 1 && determinant <= EPSILON) ||
             (constraint.sign == -1 && determinant >= -EPSILON)) {
             (*total_violations)++;
-            int points_to_update[] = {pi, pj, pk};
+            int points_to_update[] = { pi, pj, pk };
             for (int j = 0; j < 3; j++) {
                 int p = points_to_update[j];
                 violations_per_point[p]++;
@@ -62,7 +60,14 @@ void evaluate(Point* points, int n, Constraint* constraints, int constraint_coun
                 }
             }
         }
+        
     }
+    
+    //  printf("Violations in Evaluation:\n");
+    //         for (int i = 0; i < n; i++) {
+    //             printf("Point %d -> %d\n", i, violations_per_point[i]);
+    //         }
+
 
     int m1, m2;
     min_dist(points, n, min_distance, &m1, &m2);
