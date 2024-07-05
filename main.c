@@ -18,18 +18,18 @@ int main(int argc, char* argv[]) {
     }
 
     char* orientation_file = argv[1];
-    
+
     // default values
     int sub_iterations = 10;
     double min_dist = 0.25;
     int random_seed = 42;
     double reset_interval = 2.0;
-    
+
     char* output_file = malloc(256 * sizeof(char));
     if (output_file != NULL) {
         strcpy(output_file, "output.txt");
     }
-    
+
     // Parse optional arguments
     int opt;
 
@@ -55,21 +55,21 @@ int main(int argc, char* argv[]) {
                 return 1;
         }
     }
-    
+
     srand(random_seed);
-    
+
 
     int N, constraint_count;
     Constraint constraints[MAX_CONSTRAINTS];
     int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS];
     int constraints_per_point_count[MAX_POINTS];
-    
+
     parse_constraints(orientation_file, &N, constraints, &constraint_count, constraints_per_point, constraints_per_point_count);
 
     color_printf(YELLOW, "Parsed %d constraints over %d points\n\n", constraint_count, N);
-   
+
     Point points[N];
-    
+
     solve(N, constraints, constraint_count, constraints_per_point, constraints_per_point_count, sub_iterations, min_dist, points, output_file, reset_interval);
 
     return 0;

@@ -10,7 +10,7 @@ TARGET = realizer
 DEBUG_TARGET = $(TARGET)_debug
 
 # Main source file
-MAIN = main.c
+MAIN = main.c solver.c
 
 # Default target
 all: $(TARGET)
@@ -29,7 +29,7 @@ $(DEBUG_TARGET): $(MAIN)
 # Run the program with GDB
 gdb: $(DEBUG_TARGET)
 	gdb ./$(DEBUG_TARGET)
-	
+
 lldb: $(DEBUG_TARGET)
 	lldb ./$(DEBUG_TARGET)
 

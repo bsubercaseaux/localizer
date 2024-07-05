@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <float.h>
-#include <stdbool.h> 
+#include <stdbool.h>
 #include "utils.c"
 #include "evaluation.c"
 
