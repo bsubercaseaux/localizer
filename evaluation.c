@@ -8,7 +8,7 @@
 
 // Function prototypes
 void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2);
-void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS], double MIN_DIST,
+void evaluate(const Point* points, int n, const Constraint* constraints, int constraint_count, const int** constraints_per_point, double MIN_DIST,
     int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance, int given_point, int constraint_count_given_point);
 
 void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2) {
@@ -28,13 +28,13 @@ void min_dist(Point* points, int n, double* min_distance, int* m1, int* m2) {
     }
 }
 
-void evaluate(Point* points, int n, Constraint* constraints, int constraint_count, int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS],  double MIN_DIST,
+void evaluate(const Point* points, int n, const Constraint* constraints, int constraint_count, const int** constraints_per_point,  double MIN_DIST,
     int* total_violations, int* violations_per_point, int* point_with_max_violations, double* min_distance, int given_point, int constraint_count_given_point) {
     *total_violations = 0;
     int max_violations = 0;
     *point_with_max_violations = -1;
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
         violations_per_point[i] = 0;
     }
 
@@ -63,24 +63,18 @@ void evaluate(Point* points, int n, Constraint* constraints, int constraint_coun
         
     }
     
-    //  printf("Violations in Evaluation:\n");
-    //         for (int i = 0; i < n; i++) {
-    //             printf("Point %d -> %d\n", i, violations_per_point[i]);
-    //         }
+    // int m1, m2;
+    // min_dist(points, n, min_distance, &m1, &m2);
 
-
-    int m1, m2;
-    min_dist(points, n, min_distance, &m1, &m2);
-
-    if (*min_distance < MIN_DIST) {
-        (*total_violations)++;
-        violations_per_point[m1]++;
-        violations_per_point[m2]++;
-        if (violations_per_point[m1] >= max_violations) {
-            *point_with_max_violations = m1;
-        }
-        if (violations_per_point[m2] >= max_violations) {
-            *point_with_max_violations = m2;
-        }
-    }
+    // if (*min_distance < MIN_DIST) {
+    //     (*total_violations)++;
+    //     violations_per_point[m1]++;
+    //     violations_per_point[m2]++;
+    //     if (violations_per_point[m1] >= max_violations) {
+    //         *point_with_max_violations = m1;
+    //     }
+    //     if (violations_per_point[m2] >= max_violations) {
+    //         *point_with_max_violations = m2;
+    //     }
+    // }
 }

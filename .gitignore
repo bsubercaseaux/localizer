@@ -58,3 +58,5 @@ dkms.conf
 
 # Executable
 realizer
+
+__pycache__/

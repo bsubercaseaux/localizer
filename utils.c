@@ -4,11 +4,12 @@
 #include <math.h>
 #include <time.h>
 #include <stdarg.h>
+#include "rng.c"
 
 #define MAX_LINE_LENGTH 256
 
 
-#define MAX_POINTS 40
+#define MAX_POINTS 50
 #define MAX_CONSTRAINTS (MAX_POINTS*(MAX_POINTS-1)*(MAX_POINTS-2))/6
 
 #ifndef UTILS_H
@@ -29,11 +30,24 @@ typedef struct {
     double x, y;
 } Point;
 
+typedef struct {
+    Point points[MAX_POINTS];
+    int violations;
+} Solution;
+
+
+void solution_init(Solution* sol) {
+    for(int i = 0; i < MAX_POINTS; ++i) {
+        sol->points[i].x = 0.0;
+        sol->points[i].y = 0.0;
+        sol->violations = INT32_MAX;
+    }
+}
 
 // Function prototypes
-void generate_random_assignment(int N, Point* points);
-int sample_proportional(int* weights, int count);
-Point random_point_in_ball(Point p, double r);
+void generate_random_assignment(int N, Point* points, rng_t* rng);
+int sample_proportional(int* weights, int count, rng_t* rng);
+Point random_point_in_ball(Point p, double r, rng_t* rng);
 double det(Point pa, Point pb, Point pc);
 
 // Parse constraints from file
@@ -41,7 +55,7 @@ void parse_constraints(const char* orientation_file,
                         int* N, 
                         Constraint* constraints, 
                         int* constraint_count,
-                        int constraints_per_point[MAX_POINTS][MAX_CONSTRAINTS],
+                        int** constraints_per_point,
                         int* constraints_per_point_count) {
                         
     FILE* file = fopen(orientation_file, "r");
@@ -50,7 +64,7 @@ void parse_constraints(const char* orientation_file,
         exit(1);
     }
 
-    char line[MAX_LINE_LENGTH];
+    char line[MAX_LINE_LENGTH*sizeof(char)];
     *N = 0;
     *constraint_count = 0;
     for(int i = 0; i < MAX_POINTS; i++) {
@@ -91,10 +105,11 @@ void parse_constraints(const char* orientation_file,
 }
 
 // Generate random assignment of coordinates
-void generate_random_assignment(int N, Point* points) {
+void generate_random_assignment(int N, Point* points, rng_t* rng) {
     for (int i = 0; i < N; i++) {
-        points[i].x = (double)rand() / RAND_MAX * 10;
-        points[i].y = (double)rand() / RAND_MAX * 10;
+        points[i].x = rng_float(rng) * 10;
+        points[i].y = rng_float(rng) * 10;
+        // printf("Point %d: (%.2f, %.2f)\n", i + 1, points[i].x, points[i].y);
     }
 }
 
@@ -114,7 +129,7 @@ int update_max_violations(int* violations_per_point, int N, int updated_point, i
 
 
 // Sample an index proportionally to its weight
-int sample_proportional(int* weights, int count) {
+int sample_proportional(int* weights, int count, rng_t* rng) {
 
     int adjusted_weights[count];
     
@@ -125,7 +140,7 @@ int sample_proportional(int* weights, int count) {
         total_violations += adjusted_weights[i];
     }
 
-    double r = (double)rand() / RAND_MAX * total_violations;
+    double r = rng_float(rng) * total_violations;
     int cumulative = 0;
     for (int i = 0; i < count; i++) {
         // printf("i: %d, weight: %d\n", i, weights[i]);
@@ -139,9 +154,9 @@ int sample_proportional(int* weights, int count) {
 }
 
 // Generate a random point in a ball around a given point
-Point random_point_in_ball(Point p, double r) {
-    double theta = (double)rand() / RAND_MAX * 2 * M_PI;
-    double random_r = r * sqrt((double)rand() / RAND_MAX);
+Point random_point_in_ball(Point p, double r, rng_t* rng) {
+    double theta = rng_float(rng) * 2 * M_PI;
+    double random_r = r * sqrt(rng_float(rng));
 
     Point new_point;
     new_point.x = p.x + random_r * cos(theta);
@@ -214,6 +229,16 @@ void serialize_solution(int N, Point* points, const char* output_file) {
     }
 
     fclose(file);
+}
+
+struct timespec get_time() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts;
+}
+
+double elapsed_time_sec(struct timespec start, struct timespec end) {
+    return (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 }
 
 
