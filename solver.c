@@ -54,7 +54,7 @@ void solve(int N,
 
     int total_violations = INT32_MAX; // initialize to "infinity"
     int violations_per_point[N], point_with_max_violations;
-    double min_distance = 0.0;
+    double min_distance = 1.0;
 
     // evaluate the random assignment over all the constraints
     evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
