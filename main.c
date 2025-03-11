@@ -20,6 +20,10 @@ typedef struct {
     int constraint_count;
     int** constraints_per_point;
     int* constraints_per_point_count;
+    
+    bool* is_point_fixed;
+    Point* fixed_points;
+    
     int sub_iterations;
     double MIN_DIST; 
     Point *points;
@@ -31,7 +35,7 @@ typedef struct {
 
 
 void print_usage() {
-    color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed] [-r reset_interval] [-t threads]\n");
+    color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed] [-r reset_interval] [-t threads] [-f fixed points file]\n");
 }
 
 
@@ -51,7 +55,9 @@ void* thread_solve(void* arg) {
         params->reset_its,
         params->thread_id,
         params->sync,
-        params->rng);
+        params->rng,
+        params->is_point_fixed,
+        params->fixed_points);
     
     return NULL;
 }
@@ -74,11 +80,14 @@ int main(int argc, char* argv[]) {
     if (output_file != NULL) {
         strcpy(output_file, "output.txt");
     }
+    
+    char* fixed_points_file = malloc(256 * sizeof(char));
+    bool some_fixed_points = false;
 
     // Parse optional arguments
     int opt;
 
-    while ((opt = getopt(argc - 1, argv + 1, "i:s:d:o:r:t:")) != -1) {
+    while ((opt = getopt(argc - 1, argv + 1, "i:s:d:o:r:t:f:")) != -1) {
         switch (opt) {
             case 'i':
                 sub_iterations = atoi(optarg);
@@ -97,6 +106,10 @@ int main(int argc, char* argv[]) {
                 break;
             case 't':
                 NUM_THREADS = atoi(optarg);
+                break;
+            case 'f':
+                strcpy(fixed_points_file, optarg);
+                some_fixed_points = true;
                 break;
             default:
                 print_usage();
@@ -117,6 +130,12 @@ int main(int argc, char* argv[]) {
     parse_constraints(orientation_file, &N, constraints, &constraint_count, constraints_per_point, constraints_per_point_count);
 
     color_printf(YELLOW, "Parsed %d constraints over %d points\n\n", constraint_count, N);
+    
+    
+    bool* is_point_fixed = calloc(MAX_POINTS, sizeof(bool));
+    Point* fixed_points = calloc(MAX_POINTS, sizeof(Point));
+    
+    parse_fixed_points(fixed_points_file, N, fixed_points, is_point_fixed); 
    
     // Synchronization mutexes.
     synchronization_t sync;
@@ -133,6 +152,8 @@ int main(int argc, char* argv[]) {
         params[i].constraint_count = constraint_count;
         params[i].constraints_per_point =  constraints_per_point;
         params[i].constraints_per_point_count = constraints_per_point_count;
+        params[i].is_point_fixed = is_point_fixed;
+        params[i].fixed_points = fixed_points;
         params[i].sub_iterations = sub_iterations;
         params[i].MIN_DIST = min_dist;
         params[i].points = calloc(MAX_POINTS, sizeof(Point));

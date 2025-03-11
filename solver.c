@@ -12,10 +12,17 @@
 #define MIN_RADIUS 0.5
 
 // Right now this is a full reset, but it should be something smarter soon.
-void reset(Point* points, int N, synchronization_t* sync, rng_t* rng) {
+void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool* is_point_fixed, const Point* fixed_points) {
     // color_printf(RED, "\n================================  RESET ================================\n\n");
     int new_violations = 0;
     sync_get_best_solution(sync, points, &new_violations, rng);
+    
+    // Re-apply fixed points after reset
+    for (int i = 0; i < N; i++) {
+        if (is_point_fixed[i]) {
+            points[i] = fixed_points[i];
+        }
+    }
 }
 
 void print_stats(int thread_id, double time_elapsed, long long int it, int total_violations, double min_distance, int point_with_max_violations, int* violations_per_point, synchronization_t* sync) {
@@ -43,12 +50,21 @@ void solve(int N,
     long long int reset_its,
     int thread_id,
     synchronization_t* sync,
-    rng_t* rng)
+    rng_t* rng,
+    const bool* is_point_fixed,
+    const Point* fixed_points)
 {
     long long int original_reset_its = reset_its;
     
     // each thread starts from a random assignment
     generate_random_assignment(N, points, rng);
+    
+    // Apply fixed points if any
+    for (int i = 0; i < N; i++) {
+        if (is_point_fixed[i]) {
+            points[i] = fixed_points[i];
+        }
+    }
     struct timespec start_time = get_time();
     long long int it = 0;
 
@@ -76,7 +92,7 @@ void solve(int N,
     while (total_violations > 0) {
        
         if (its_since_checkpoint > reset_its) {
-            reset(points, N, sync, rng);
+            reset(points, N, sync, rng, is_point_fixed, fixed_points);
 
             its_since_checkpoint = 0;
             evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
@@ -105,6 +121,12 @@ void solve(int N,
         for (int sub_it = 0; sub_it < sub_iterations; sub_it++) {
             // choose a point to move proportionally to constraint violations
             int chosen_for_replacement = sample_proportional(violations_per_point, N, rng);
+            
+            // Skip if this is a fixed point
+            if (is_point_fixed[chosen_for_replacement]) {
+                // Try again with another point if this one is fixed
+                continue;
+            }
             
             // first evaluation regarding the chosen point
             // local evaluation only looks at constaints involving the chosen point.
@@ -179,6 +201,18 @@ void solve(int N,
         for (int i = 0; i < N; i++) {
             printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
         }
+        
+        // for (int i = 0; i < constraint_count; i++) {
+        //     Constraint constraint = constraints[i];
+        //     int pi = constraint.i - 1;
+        //     int pj = constraint.j - 1;
+        //     int pk = constraint.k - 1;
+        //     double determinant = det(points[pi], points[pj], points[pk]);
+        //     if ((constraint.sign == 1 && determinant <= EPSILON) ||
+        //         (constraint.sign == -1 && determinant >= -EPSILON)) {
+        //         printf("Constraint %d violated\n", i + 1, " determinant: %.6f\n", determinant);
+        //     }
+        // }
         printf("\n");
     
         serialize_solution(N, points, output_file);

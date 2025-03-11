@@ -49,6 +49,7 @@ void generate_random_assignment(int N, Point* points, rng_t* rng);
 int sample_proportional(int* weights, int count, rng_t* rng);
 Point random_point_in_ball(Point p, double r, rng_t* rng);
 double det(Point pa, Point pb, Point pc);
+void parse_fixed_points(const char* fixed_points_file, int N, Point* fixed_points, bool* is_point_fixed);
 
 // Parse constraints from file
 void parse_constraints(const char* orientation_file, 
@@ -225,7 +226,7 @@ void serialize_solution(int N, Point* points, const char* output_file) {
     }
 
     for (int i = 0; i < N; i++) {
-        fprintf(file, "%d %.6f %.6f\n", i + 1, points[i].x, points[i].y);
+        fprintf(file, "%d %.8f %.8f\n", i + 1, points[i].x, points[i].y);
     }
 
     fclose(file);
@@ -241,5 +242,43 @@ double elapsed_time_sec(struct timespec start, struct timespec end) {
     return (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 }
 
+// Parse fixed points from file
+void parse_fixed_points(const char* fixed_points_file, int N, Point* fixed_points, bool* is_point_fixed) {
+    // If no file is provided, return without fixing any points
+    if (fixed_points_file == NULL || strlen(fixed_points_file) == 0) {
+        return;
+    }
+
+    FILE* file = fopen(fixed_points_file, "r");
+    if (file == NULL) {
+        printf("Error opening fixed points file\n");
+        return;
+    }
+
+    char line[MAX_LINE_LENGTH];
+    while (fgets(line, sizeof(line), file)) {
+        int point_idx;
+        double x, y;
+        
+        // Parse line in format "idx:x,y"
+        if (sscanf(line, "%d:%lf,%lf", &point_idx, &x, &y) == 3) {
+            if (point_idx > 0 && point_idx <= N) {
+                // Adjust to 0-based indexing
+                int idx = point_idx - 1;
+                fixed_points[idx].x = x;
+                fixed_points[idx].y = y;
+                is_point_fixed[idx] = true;
+                
+                color_printf(GREEN, "Fixed point %d at (%.2f, %.2f)\n", point_idx, x, y);
+            } else {
+                color_printf(RED, "Invalid point index %d in fixed points file\n", point_idx);
+            }
+        } else {
+            color_printf(RED, "Invalid format in fixed points file: %s\n", line);
+        }
+    }
+
+    fclose(file);
+}
 
 #endif // UTILS_H
