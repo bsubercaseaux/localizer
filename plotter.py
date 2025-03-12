@@ -22,7 +22,7 @@ N, points = parse_solution(solution_file)
 
 x_coords, y_coords = zip(*points)
 fig, ax = plt.subplots()
-# plt.gca().set_aspect('equal')
+plt.gca().set_aspect('equal')
 ax.set_axisbelow(True)
 ax.grid(color="gray", linestyle="dashed")
 
