@@ -186,22 +186,22 @@ void solve(int N,
         // final solution check.
         evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
         &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
-        
+
         assert(total_violations == 0);
 
         double time_elapsed = elapsed_time_sec(start_time, get_time());
-    
+
         color_printf(GREEN, "\n====================  SOLVED  ====================\n\n");
         color_printf(YELLOW, "Time");  printf(": %.3f seconds\n", time_elapsed);
         color_printf(YELLOW, "Total iterations"); printf(": %lld\n", it);
         color_printf(YELLOW, "Minimum distance"); printf(": %.3f\n", min_distance);
         color_printf(YELLOW, "Thread number"); printf(": %d\n", thread_id);
         color_printf(GREEN, "\nSolution:\n");
-        
+
         for (int i = 0; i < N; i++) {
             printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
         }
-        
+
         // for (int i = 0; i < constraint_count; i++) {
         //     Constraint constraint = constraints[i];
         //     int pi = constraint.i - 1;
@@ -214,7 +214,7 @@ void solve(int N,
         //     }
         // }
         printf("\n");
-    
+
         serialize_solution(N, points, output_file);
         color_printf(YELLOW, "Solution saved to %s\n", output_file);
     }
