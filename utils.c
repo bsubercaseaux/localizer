@@ -137,6 +137,7 @@ int sample_proportional(int* weights, int count, rng_t* rng) {
     int total_violations = 0;
     for (int i = 0; i < count; i++) {
         // weight adjustment makes sure all weights are > 0, and hence every element has a chance to be selected
+        // adjusted_weights[i] = WEIGHT_ADJUSTMENT * pow(weights[i], 1.5) + 1;
         adjusted_weights[i] = WEIGHT_ADJUSTMENT * weights[i] + 1;
         total_violations += adjusted_weights[i];
     }

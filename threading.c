@@ -8,7 +8,7 @@
 #define THREADING_H
 
 
-#define K_TOP 5
+#define K_TOP 10
 
 // Mutex and condition variable to signal the first thread to finish
 typedef struct {
@@ -60,7 +60,7 @@ bool sync_set_stop(synchronization_t* sync) {
 void sync_broadcast_new_solution(synchronization_t* sync, Point* points, int violations) {
     pthread_mutex_lock(&sync->top_k_mutex);
     for(int i = 0; i < K_TOP; ++i) {
-        if(violations < sync->top_k_solutions[i].violations) {
+        if(violations <= sync->top_k_solutions[i].violations) {
             for(int j = i+1; j < K_TOP; ++j) {
                 sync->top_k_solutions[j].violations = sync->top_k_solutions[j-1].violations;
                 for(int p = 0; p < MAX_POINTS; ++p) {
@@ -84,16 +84,25 @@ void sync_get_best_solution(synchronization_t* sync, Point* points, int* violati
     
     int scores[K_TOP];
     for(int i = 0; i < K_TOP; ++i) {
-        scores[i] = MAX_CONSTRAINTS - sync->top_k_solutions[i].violations;
+        scores[i] = (5000 - sync->top_k_solutions[i].violations)*(K_TOP - i);
+        // scores[i] = 5000 - sync->top_k_solutions[i].violations;
+        // scores[i] = scores[i] * scores[i];
     }
-    int idx = sample_proportional(scores, K_TOP, rng);
+    // printf("top sol: %d\n", sync->top_k_solutions[0].violations);
+    int idx = sample_proportional(scores, K_TOP, rng); // TODO: recall to get back to this
+    // int idx = 0;
+    // printf("idx choice: %d\n", idx);
     
-    *violations = sync->top_k_solutions[idx].violations;
+    // *violations = sync->top_k_solutions[idx].violations;
+    printf("violations: %d\n", sync->top_k_solutions[idx].violations);
     
     for(int i = 0; i < MAX_POINTS; ++i) {
         points[i] = random_point_in_ball(sync->top_k_solutions[idx].points[i], 1.0, rng);
+        points[i].x = sync->top_k_solutions[idx].points[i].x;
+        points[i].y = sync->top_k_solutions[idx].points[i].y;
     }
-    
+    // int viols = 0;
+    // evaluate(points, MAX_POINTS, &sync, 0, NULL, 0.0, &viols, NULL, NULL, NULL, -1, -1);
     pthread_mutex_unlock(&sync->top_k_mutex);
 }
 

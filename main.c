@@ -5,12 +5,20 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
+
 #include "utils.c"
 #include "solver.c"
 #include "threading.c"
 #include "rng.c"
 
 int GLOBAL_SEED = 42;
+
+synchronization_t _sync; // Global synchronization variable, keeping the best solutions.
+// it's global to allow for signal handling
+int _N = 0; // number of points, global for signal handling
+
+char* output_file = NULL;
 
 // Struct to hold thread parameters
 typedef struct {
@@ -36,6 +44,36 @@ typedef struct {
 
 void print_usage() {
     color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed] [-r reset_interval] [-t threads] [-f fixed points file]\n");
+}
+
+void sigint_handler(int sig_num)
+{
+    printf("\nInterrupt signal (%d) received.\n", sig_num);
+    pthread_mutex_lock(&_sync.top_k_mutex);
+    // Print information about the object if it exists
+    if (&_sync != NULL) {
+        color_printf(GREEN, "Best solution is:\n");
+        Point* points = _sync.top_k_solutions[0].points;
+        for (int i = 0; i < _N; i++) {
+            printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
+        }
+            
+
+        printf("Violations: %d\n", _sync.top_k_solutions[0].violations);
+        
+        printf("\n");
+    
+        serialize_solution(_N, points, output_file);
+        color_printf(YELLOW, "Solution saved to %s\n", output_file);
+        // printf(sync.top_k_solutions[0]);
+    } 
+    
+  
+        
+    
+    pthread_mutex_unlock(&_sync.top_k_mutex);
+    sync_destroy(&_sync);
+    exit(0);
 }
 
 
@@ -68,6 +106,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+        
+    signal(SIGINT, sigint_handler);
+    
     char* orientation_file = argv[1];
 
     // default values
@@ -76,13 +117,13 @@ int main(int argc, char* argv[]) {
     double min_dist = 0.25;
     long long int reset_its = 1000000;
     
-    char* output_file = malloc(256 * sizeof(char));
+        output_file = malloc(256 * sizeof(char));
     if (output_file != NULL) {
         strcpy(output_file, "output.txt");
     }
     
     char* fixed_points_file = malloc(256 * sizeof(char));
-    bool some_fixed_points = false;
+    // bool some_fixed_points = false;
 
     // Parse optional arguments
     int opt;
@@ -109,7 +150,7 @@ int main(int argc, char* argv[]) {
                 break;
             case 'f':
                 strcpy(fixed_points_file, optarg);
-                some_fixed_points = true;
+                // some_fixed_points = true;
                 break;
             default:
                 print_usage();
@@ -131,6 +172,7 @@ int main(int argc, char* argv[]) {
 
     color_printf(YELLOW, "Parsed %d constraints over %d points\n\n", constraint_count, N);
     
+    _N = N;
     
     bool* is_point_fixed = calloc(MAX_POINTS, sizeof(bool));
     Point* fixed_points = calloc(MAX_POINTS, sizeof(Point));
@@ -138,8 +180,10 @@ int main(int argc, char* argv[]) {
     parse_fixed_points(fixed_points_file, N, fixed_points, is_point_fixed); 
    
     // Synchronization mutexes.
-    synchronization_t sync;
-    sync_init(&sync);
+   
+    sync_init(&_sync);
+    
+    
     
     thread_params_t* params = calloc(NUM_THREADS, sizeof(thread_params_t));
     
@@ -159,7 +203,7 @@ int main(int argc, char* argv[]) {
         params[i].points = calloc(MAX_POINTS, sizeof(Point));
         params[i].output_file = output_file;
         params[i].reset_its = reset_its;
-        params[i].sync = &sync;
+        params[i].sync = &_sync;
         params[i].rng = malloc(sizeof(rng_t));
         rng_init(params[i].rng, GLOBAL_SEED + i);
 
@@ -187,7 +231,7 @@ int main(int argc, char* argv[]) {
         free(constraints_per_point[i]);
     }
     
-    sync_destroy(&sync);
+    sync_destroy(&_sync);
     
     free(params);
    

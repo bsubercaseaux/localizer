@@ -9,7 +9,7 @@
 #include "threading.c"
 
 #define RESET_MULTIPLIER 1.25
-#define MIN_RADIUS 0.5
+#define MIN_RADIUS 0.1
 
 // Right now this is a full reset, but it should be something smarter soon.
 void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool* is_point_fixed, const Point* fixed_points) {
@@ -23,6 +23,41 @@ void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool
             points[i] = fixed_points[i];
         }
     }
+}
+
+void test_random_moves(int N, Point* points, const Constraint* constraints, int constraint_count, const int** constraints_per_point, rng_t* rng, 
+    int* total_violations, const bool* is_point_fixed) {
+    int violations_per_point_relative[N];
+    int min_test_violations = INT32_MAX;
+    Point best_tests[N];
+    for(int i = 0; i < 500; ++i) {
+        Point test_pts[N];
+        memcpy(test_pts, points, N * sizeof(Point));
+        int violations_curr = 0;
+        for(int j = 0; j < N; ++j) {
+            // test_pts[j] = points[j];
+            if(!is_point_fixed[j])  {
+                test_pts[j] = random_point_in_ball(points[j], 1.0, rng);
+            }
+        }
+        int point_with_max_violations;
+        evaluate(test_pts, N, constraints, constraint_count, constraints_per_point, 0.0,
+            &violations_curr, violations_per_point_relative, &point_with_max_violations, NULL, -1, -1);
+            
+        // printf("Test move %d: %d violations, original viols = %d\n", i, violations_curr, *total_violations);
+        if(violations_curr < min_test_violations) {
+            min_test_violations = violations_curr;
+            memcpy(best_tests, test_pts, N * sizeof(Point));
+        }
+        
+    
+    }
+    if( min_test_violations < *total_violations || rng_float(rng) < 0.5) {
+        memcpy(points, best_tests, N * sizeof(Point));
+    }
+        
+    printf("Min test violations: %d, original: %d\n", min_test_violations, *total_violations);
+   
 }
 
 void print_stats(int thread_id, double time_elapsed, long long int it, int total_violations, double min_distance, int point_with_max_violations, int* violations_per_point, synchronization_t* sync) {
@@ -95,6 +130,12 @@ void solve(int N,
             reset(points, N, sync, rng, is_point_fixed, fixed_points);
 
             its_since_checkpoint = 0;
+            
+            evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
+                &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
+                
+            test_random_moves(N, points, constraints, constraint_count, constraints_per_point, rng, &total_violations, is_point_fixed);
+            
             evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
                 &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
         }
@@ -112,7 +153,7 @@ void solve(int N,
         }
 
         // twice per reset we print states
-        if (it % (reset_its) == 0) {
+        if (it % (reset_its / 2) == 0) {
             double time_elapsed = elapsed_time_sec(start_time, get_time());
             print_stats(thread_id, time_elapsed, it, total_violations, min_distance, point_with_max_violations, violations_per_point, sync);
         }
