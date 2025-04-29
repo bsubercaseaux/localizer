@@ -91,9 +91,9 @@ void sync_get_best_solution(synchronization_t* sync, Point* points, int* violati
     // printf("top sol: %d\n", sync->top_k_solutions[0].violations);
     int idx = sample_proportional(scores, K_TOP, rng); // TODO: recall to get back to this
     // int idx = 0;
-    // printf("idx choice: %d\n", idx);
+    printf("idx choice: %d\n", idx);
     
-    // *violations = sync->top_k_solutions[idx].violations;
+    *violations = sync->top_k_solutions[idx].violations;
     printf("violations: %d\n", sync->top_k_solutions[idx].violations);
     
     for(int i = 0; i < MAX_POINTS; ++i) {

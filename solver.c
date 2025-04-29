@@ -11,23 +11,9 @@
 #define RESET_MULTIPLIER 1.25
 #define MIN_RADIUS 0.1
 
-Point rotate_90(Point p) {
-    Point rotated;
-    rotated.x = -p.y;
-    rotated.y = p.x;
-    return rotated;
-}
-
-Point rotate_k(Point p, int k) {
-    Point rotated = p;
-    for (int i = 0; i < k; i++) {
-        rotated = rotate_90(rotated);
-    }
-    return rotated;
-}
 
 // Right now this is a full reset, but it should be something smarter soon.
-void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool* is_point_fixed, const Point* fixed_points) {
+void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool* is_point_fixed, const Point* fixed_points, const Symmetry* symmetry) {
     // color_printf(RED, "\n================================  RESET ================================\n\n");
     int new_violations = 0;
     sync_get_best_solution(sync, points, &new_violations, rng);
@@ -39,19 +25,15 @@ void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool
         }
     }
     
-    // enforce 4 symmetry.
-    for(int i = 0; i < N; ++i) {
-        int reprsentative = 4*(i/4);
-        points[i] = rotate_k(points[reprsentative], i % 4);
-    }
+    enforce_symmetry(symmetry, points);
 }
 
 void test_random_moves(int N, Point* points, const Constraint* constraints, int constraint_count, const int** constraints_per_point, rng_t* rng, 
-    int* total_violations, const bool* is_point_fixed) {
+    int* total_violations, const bool* is_point_fixed, const Symmetry* symmetry) {
     int violations_per_point_relative[N];
     int min_test_violations = INT32_MAX;
     Point best_tests[N];
-    for(int i = 0; i < 500; ++i) {
+    for(int i = 0; i < 100; ++i) {
         Point test_pts[N];
         memcpy(test_pts, points, N * sizeof(Point));
         int violations_curr = 0;
@@ -61,6 +43,9 @@ void test_random_moves(int N, Point* points, const Constraint* constraints, int 
                 test_pts[j] = random_point_in_ball(points[j], 1.0, rng);
             }
         }
+        
+        enforce_symmetry(symmetry, test_pts);
+        
         int point_with_max_violations;
         evaluate(test_pts, N, constraints, constraint_count, constraints_per_point, 0.0,
             &violations_curr, violations_per_point_relative, &point_with_max_violations, NULL, -1, -1);
@@ -78,12 +63,7 @@ void test_random_moves(int N, Point* points, const Constraint* constraints, int 
     }
         
     printf("Min test violations: %d, original: %d\n", min_test_violations, *total_violations);
-    
-    // enforce 4 symmetry.
-    for(int i = 0; i < N; ++i) {
-        int reprsentative = 4*(i/4);
-        points[i] = rotate_k(points[reprsentative], i % 4);
-    }   
+
    
 }
 
@@ -114,7 +94,8 @@ void solve(int N,
     synchronization_t* sync,
     rng_t* rng,
     const bool* is_point_fixed,
-    const Point* fixed_points)
+    const Point* fixed_points,
+    const Symmetry* symmetry)
 {
     long long int original_reset_its = reset_its;
     
@@ -128,11 +109,7 @@ void solve(int N,
         }
     }
     
-    // enforce 4 symmetry.
-    for(int i = 0; i < N; ++i) {
-        int reprsentative = 4*(i/4);
-        points[i] = rotate_k(points[reprsentative], i % 4);
-    }
+    enforce_symmetry(symmetry, points);
     
     struct timespec start_time = get_time();
     long long int it = 0;
@@ -161,14 +138,14 @@ void solve(int N,
     while (total_violations > 0) {
        
         if (its_since_checkpoint > reset_its) {
-            reset(points, N, sync, rng, is_point_fixed, fixed_points);
+            reset(points, N, sync, rng, is_point_fixed, fixed_points, symmetry);
 
             its_since_checkpoint = 0;
             
             evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
                 &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
                 
-            test_random_moves(N, points, constraints, constraint_count, constraints_per_point, rng, &total_violations, is_point_fixed);
+            test_random_moves(N, points, constraints, constraint_count, constraints_per_point, rng, &total_violations, is_point_fixed, symmetry);
             
             evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
                 &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
@@ -218,11 +195,7 @@ void solve(int N,
                 fmax(MIN_RADIUS, final_radius / pow(2, sub_it)), rng);
             
         
-              // enforce 4 symmetry.
-            for(int i = 0; i < N; ++i) {
-                int reprsentative = 4*(i/4);
-                test_pts[i] = rotate_k(test_pts[reprsentative], i % 4);
-            }
+            enforce_symmetry(symmetry, test_pts);
         
             // evaluate the updated points
             int total_violations_with_test, temp_violations_per_point[N], temp_max_violation_point;
@@ -240,11 +213,8 @@ void solve(int N,
             if (local_violations_with_test <= local_violations) {
                 // update points
                 points[chosen_for_replacement] = test_pts[chosen_for_replacement];
-                  // enforce 4 symmetry.
-                for(int i = 0; i < N; ++i) {
-                    int reprsentative = 4*(i/4);
-                    points[i] = rotate_k(points[reprsentative], i % 4);
-                }
+                  
+                enforce_symmetry(symmetry, points);
       
                 // update violations
                 for (int i = 0; i < N; i++) {
@@ -288,17 +258,6 @@ void solve(int N,
             printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
         }
         
-        // for (int i = 0; i < constraint_count; i++) {
-        //     Constraint constraint = constraints[i];
-        //     int pi = constraint.i - 1;
-        //     int pj = constraint.j - 1;
-        //     int pk = constraint.k - 1;
-        //     double determinant = det(points[pi], points[pj], points[pk]);
-        //     if ((constraint.sign == 1 && determinant <= EPSILON) ||
-        //         (constraint.sign == -1 && determinant >= -EPSILON)) {
-        //         printf("Constraint %d violated\n", i + 1, " determinant: %.6f\n", determinant);
-        //     }
-        // }
         printf("\n");
     
         serialize_solution(N, points, output_file);
