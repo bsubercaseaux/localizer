@@ -11,6 +11,21 @@
 #define RESET_MULTIPLIER 1.25
 #define MIN_RADIUS 0.1
 
+Point rotate_90(Point p) {
+    Point rotated;
+    rotated.x = -p.y;
+    rotated.y = p.x;
+    return rotated;
+}
+
+Point rotate_k(Point p, int k) {
+    Point rotated = p;
+    for (int i = 0; i < k; i++) {
+        rotated = rotate_90(rotated);
+    }
+    return rotated;
+}
+
 // Right now this is a full reset, but it should be something smarter soon.
 void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool* is_point_fixed, const Point* fixed_points) {
     // color_printf(RED, "\n================================  RESET ================================\n\n");
@@ -22,6 +37,12 @@ void reset(Point* points, int N, synchronization_t* sync, rng_t* rng, const bool
         if (is_point_fixed[i]) {
             points[i] = fixed_points[i];
         }
+    }
+    
+    // enforce 4 symmetry.
+    for(int i = 0; i < N; ++i) {
+        int reprsentative = 4*(i/4);
+        points[i] = rotate_k(points[reprsentative], i % 4);
     }
 }
 
@@ -57,6 +78,12 @@ void test_random_moves(int N, Point* points, const Constraint* constraints, int 
     }
         
     printf("Min test violations: %d, original: %d\n", min_test_violations, *total_violations);
+    
+    // enforce 4 symmetry.
+    for(int i = 0; i < N; ++i) {
+        int reprsentative = 4*(i/4);
+        points[i] = rotate_k(points[reprsentative], i % 4);
+    }   
    
 }
 
@@ -100,6 +127,13 @@ void solve(int N,
             points[i] = fixed_points[i];
         }
     }
+    
+    // enforce 4 symmetry.
+    for(int i = 0; i < N; ++i) {
+        int reprsentative = 4*(i/4);
+        points[i] = rotate_k(points[reprsentative], i % 4);
+    }
+    
     struct timespec start_time = get_time();
     long long int it = 0;
 
@@ -183,7 +217,13 @@ void solve(int N,
             test_pts[chosen_for_replacement] = random_point_in_ball(points[chosen_for_replacement],
                 fmax(MIN_RADIUS, final_radius / pow(2, sub_it)), rng);
             
-
+        
+              // enforce 4 symmetry.
+            for(int i = 0; i < N; ++i) {
+                int reprsentative = 4*(i/4);
+                test_pts[i] = rotate_k(test_pts[reprsentative], i % 4);
+            }
+        
             // evaluate the updated points
             int total_violations_with_test, temp_violations_per_point[N], temp_max_violation_point;
             double temp_min_dist;
@@ -200,6 +240,11 @@ void solve(int N,
             if (local_violations_with_test <= local_violations) {
                 // update points
                 points[chosen_for_replacement] = test_pts[chosen_for_replacement];
+                  // enforce 4 symmetry.
+                for(int i = 0; i < N; ++i) {
+                    int reprsentative = 4*(i/4);
+                    points[i] = rotate_k(points[reprsentative], i % 4);
+                }
       
                 // update violations
                 for (int i = 0; i < N; i++) {

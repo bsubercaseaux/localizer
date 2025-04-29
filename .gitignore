@@ -60,3 +60,10 @@ dkms.conf
 realizer
 
 __pycache__/
+
+.DS_Store
+
+CLAUDE.md
+
+benchmarks/
+order_types/
