@@ -257,22 +257,7 @@ void solve(int N,
         for (int i = 0; i < N; i++) {
             printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
         }
-<<<<<<< HEAD
 
-        // for (int i = 0; i < constraint_count; i++) {
-        //     Constraint constraint = constraints[i];
-        //     int pi = constraint.i - 1;
-        //     int pj = constraint.j - 1;
-        //     int pk = constraint.k - 1;
-        //     double determinant = det(points[pi], points[pj], points[pk]);
-        //     if ((constraint.sign == 1 && determinant <= EPSILON) ||
-        //         (constraint.sign == -1 && determinant >= -EPSILON)) {
-        //         printf("Constraint %d violated\n", i + 1, " determinant: %.6f\n", determinant);
-        //     }
-        // }
-=======
-        
->>>>>>> fc37412b9397cdfae142cbd0d0ddf2e026e6fc7f
         printf("\n");
 
         serialize_solution(N, points, output_file);
