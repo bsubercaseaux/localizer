@@ -31,6 +31,7 @@ typedef struct {
     
     bool* is_point_fixed;
     Point* fixed_points;
+    Symmetry* symmetry;
     
     int sub_iterations;
     double MIN_DIST; 
@@ -43,7 +44,7 @@ typedef struct {
 
 
 void print_usage() {
-    color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed] [-r reset_interval] [-t threads] [-f fixed points file]\n");
+    color_printf(RED, "Usage: <orientation_file> [-i sub_iterations] [-d min_dist] [-o output_file] [-s random_seed]\n [-r reset_interval] [-t threads] [-f fixed points file] [-c symmetry file]\n");
 }
 
 void sigint_handler(int sig_num)
@@ -51,26 +52,19 @@ void sigint_handler(int sig_num)
     printf("\nInterrupt signal (%d) received.\n", sig_num);
     pthread_mutex_lock(&_sync.top_k_mutex);
     // Print information about the object if it exists
-    if (&_sync != NULL) {
-        color_printf(GREEN, "Best solution is:\n");
-        Point* points = _sync.top_k_solutions[0].points;
-        for (int i = 0; i < _N; i++) {
-            printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
-        }
-            
-
-        printf("Violations: %d\n", _sync.top_k_solutions[0].violations);
-        
-        printf("\n");
-    
-        serialize_solution(_N, points, output_file);
-        color_printf(YELLOW, "Solution saved to %s\n", output_file);
-        // printf(sync.top_k_solutions[0]);
-    } 
-    
   
+    color_printf(GREEN, "Best solution is:\n");
+    Point* points = _sync.top_k_solutions[0].points;
+    for (int i = 0; i < _N; i++) {
+        printf("\t\t Point %d: (%.6f, %.6f)\n", i + 1, points[i].x, points[i].y);
+    }
         
-    
+    printf("Violations: %d\n", _sync.top_k_solutions[0].violations);
+    printf("\n");
+
+    serialize_solution(_N, points, output_file);
+    color_printf(YELLOW, "Solution saved to %s\n", output_file);
+ 
     pthread_mutex_unlock(&_sync.top_k_mutex);
     sync_destroy(&_sync);
     exit(0);
@@ -95,7 +89,8 @@ void* thread_solve(void* arg) {
         params->sync,
         params->rng,
         params->is_point_fixed,
-        params->fixed_points);
+        params->fixed_points,
+        params->symmetry);
     
     return NULL;
 }
@@ -115,7 +110,7 @@ int main(int argc, char* argv[]) {
     int sub_iterations = 10;
     int NUM_THREADS = 1;
     double min_dist = 0.25;
-    long long int reset_its = 1000000;
+    long long int reset_its = 100000;
     
         output_file = malloc(256 * sizeof(char));
     if (output_file != NULL) {
@@ -123,12 +118,12 @@ int main(int argc, char* argv[]) {
     }
     
     char* fixed_points_file = malloc(256 * sizeof(char));
-    // bool some_fixed_points = false;
+    char* symmetry_file = malloc(256 * sizeof(char));
 
     // Parse optional arguments
     int opt;
 
-    while ((opt = getopt(argc - 1, argv + 1, "i:s:d:o:r:t:f:")) != -1) {
+    while ((opt = getopt(argc - 1, argv + 1, "i:s:d:o:r:t:f:c:")) != -1) {
         switch (opt) {
             case 'i':
                 sub_iterations = atoi(optarg);
@@ -151,6 +146,9 @@ int main(int argc, char* argv[]) {
             case 'f':
                 strcpy(fixed_points_file, optarg);
                 // some_fixed_points = true;
+                break;
+            case 'c':
+                strcpy(symmetry_file, optarg);
                 break;
             default:
                 print_usage();
@@ -177,10 +175,13 @@ int main(int argc, char* argv[]) {
     bool* is_point_fixed = calloc(MAX_POINTS, sizeof(bool));
     Point* fixed_points = calloc(MAX_POINTS, sizeof(Point));
     
-    parse_fixed_points(fixed_points_file, N, fixed_points, is_point_fixed); 
+    parse_fixed_points(fixed_points_file, N, fixed_points, is_point_fixed);
+    
+    Symmetry symmetry;
+    
+    parse_symmetry(symmetry_file, &symmetry);        
    
     // Synchronization mutexes.
-   
     sync_init(&_sync);
     
     
@@ -198,6 +199,7 @@ int main(int argc, char* argv[]) {
         params[i].constraints_per_point_count = constraints_per_point_count;
         params[i].is_point_fixed = is_point_fixed;
         params[i].fixed_points = fixed_points;
+        params[i].symmetry = &symmetry;
         params[i].sub_iterations = sub_iterations;
         params[i].MIN_DIST = min_dist;
         params[i].points = calloc(MAX_POINTS, sizeof(Point));
@@ -213,6 +215,9 @@ int main(int argc, char* argv[]) {
         }
     }
     
+    color_printf(CYAN, "=========================================================\n");
+    color_printf(CYAN, "========================  STARTING  =====================\n");
+    color_printf(CYAN, "=========================================================\n\n");
     
        // Join all threads
     for (int i = 0; i < NUM_THREADS; i++) {
@@ -234,7 +239,6 @@ int main(int argc, char* argv[]) {
     sync_destroy(&_sync);
     
     free(params);
-   
     free(output_file);
 
     return 0;

@@ -35,6 +35,13 @@ typedef struct {
     int violations;
 } Solution;
 
+// Structure to represent a symmetry
+typedef struct {
+    int cycles[MAX_POINTS][MAX_POINTS];
+    int cycle_lengths[MAX_POINTS];
+    // int leads[MAX_POINTS];
+    int num_cycles;
+} Symmetry;
 
 void solution_init(Solution* sol) {
     for(int i = 0; i < MAX_POINTS; ++i) {
@@ -125,6 +132,30 @@ int update_max_violations(int* violations_per_point, int N, int updated_point, i
         }
     }
     return imx;
+}
+
+
+Point rotate(Point p, double angle) {
+    Point rotated;
+    rotated.x = p.x * cos(angle) - p.y * sin(angle);
+    rotated.y = p.x * sin(angle) + p.y * cos(angle);
+    return rotated;
+}
+
+// rotate r times in a k-fold symmetry
+// so by 2*pi*r/k degrees
+Point rotate_r_k(Point p, int r, int k) {
+    double angle = 2 * M_PI * r / k;
+    return rotate(p, angle);
+}
+
+void enforce_symmetry(const Symmetry* symmetry, Point* points) {
+    for(int i = 0; i < symmetry->num_cycles; ++i) {
+        Point lead = points[symmetry->cycles[i][0]];
+        for(int j = 0; j < symmetry->cycle_lengths[i]; ++j) {
+            points[symmetry->cycles[i][j]] = rotate_r_k(lead, j, symmetry->cycle_lengths[i]);
+        }
+    }
 }
 
 
@@ -280,6 +311,59 @@ void parse_fixed_points(const char* fixed_points_file, int N, Point* fixed_point
     }
 
     fclose(file);
+}
+
+void parse_symmetry(const char* symmetry_file, Symmetry* symmetry) {
+    // If no file is provided, return without fixing any points
+    if (symmetry_file == NULL || strlen(symmetry_file) == 0) {
+        return;
+    }
+
+    FILE* file = fopen(symmetry_file, "r");
+    if (file == NULL) {
+        printf("Error opening symmetry file\n");
+        exit(1);
+    }
+
+    color_printf(GREEN, "Parsing symmetry file: %s\n", symmetry_file);
+    color_printf(GREEN, "--------------------------------\n");
+    char line[MAX_LINE_LENGTH];
+    int cycle_count = 0;
+    while (fgets(line, sizeof(line), file)) {
+        char* ptr = line;
+        int num;
+        int cnt = 0;
+        int chr_cnt = 0;
+        while (ptr && *ptr && sscanf(ptr, "%d%n", &num, &chr_cnt) == 1) {
+            symmetry->cycles[cycle_count][cnt++] = num-1;
+            ptr += chr_cnt;
+            // Skip any whitespace
+            while (*ptr && (*ptr == ' ' || *ptr == '\t')) {
+                ptr++;
+            }
+        }
+        
+
+        symmetry->cycle_lengths[cycle_count] = cnt;
+
+        cycle_count++;
+        
+    }
+    symmetry->num_cycles = cycle_count;
+    for(int i = 0; i < symmetry->num_cycles; ++i) {
+        color_printf(YELLOW, "Cycle %d, ", i);
+ 
+        
+        for(int j = 0; j < symmetry->cycle_lengths[i]; ++j) {
+            int point = symmetry->cycles[i][j];
+            printf("%d->", point + 1);   
+        }
+        printf("%d", symmetry->cycles[i][0] + 1);
+        printf("\n");
+    }
+    fclose(file);
+    color_printf(GREEN, "--------------------------------\n");
+    color_printf(GREEN, "Parsed %d cycles\n\n", symmetry->num_cycles);
 }
 
 #endif // UTILS_H
