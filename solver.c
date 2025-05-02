@@ -58,7 +58,7 @@ void test_random_moves(int N, Point* points, const Constraint* constraints, int 
         
     
     }
-    if( min_test_violations < *total_violations || rng_float(rng) < 0.5) {
+    if(min_test_violations < *total_violations || rng_float(rng) < 0.5) {
         memcpy(points, best_tests, N * sizeof(Point));
     }
         
@@ -149,10 +149,13 @@ void solve(int N,
             
             evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
                 &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
+                
+            // printf("Reset: %d violations\n", total_violations);
         }
 
 
         if (total_violations == 0) {
+            // printf("Found a solution! break\n");
             break;
         }
 
@@ -182,10 +185,14 @@ void solve(int N,
             
             // first evaluation regarding the chosen point
             // local evaluation only looks at constaints involving the chosen point.
+            // evaluate(points, N, constraints, constraint_count,
+            //     constraints_per_point, MIN_DIST,
+            //     &violations_chosen, violations_per_point_relative, &max_violation_relative, 
+            //     &min_dist_relative, chosen_for_replacement, constraints_per_point_count[chosen_for_replacement]);
             evaluate(points, N, constraints, constraint_count,
-                constraints_per_point, MIN_DIST,
-                &violations_chosen, violations_per_point_relative, &max_violation_relative, 
-                &min_dist_relative, chosen_for_replacement, constraints_per_point_count[chosen_for_replacement]);
+                    constraints_per_point, MIN_DIST,
+                    &violations_chosen, violations_per_point_relative, &max_violation_relative, 
+                    &min_dist_relative, -1, -1);
     
             // create copy 
             memcpy(test_pts, points, N * sizeof(Point));
@@ -202,10 +209,12 @@ void solve(int N,
             double temp_min_dist;
             
 
+            // evaluate(test_pts, N, constraints, constraint_count,
+            //     constraints_per_point, MIN_DIST,
+            //     &total_violations_with_test, temp_violations_per_point, &temp_max_violation_point, &temp_min_dist, chosen_for_replacement, constraints_per_point_count[chosen_for_replacement]);
             evaluate(test_pts, N, constraints, constraint_count,
                 constraints_per_point, MIN_DIST,
-                &total_violations_with_test, temp_violations_per_point, &temp_max_violation_point, &temp_min_dist, chosen_for_replacement, constraints_per_point_count[chosen_for_replacement]);
-                
+                &total_violations_with_test, temp_violations_per_point, &temp_max_violation_point, &temp_min_dist, -1, -1);
           
             int local_violations = violations_per_point_relative[chosen_for_replacement];
             int local_violations_with_test = temp_violations_per_point[chosen_for_replacement];
@@ -215,17 +224,28 @@ void solve(int N,
                 points[chosen_for_replacement] = test_pts[chosen_for_replacement];
                   
                 enforce_symmetry(symmetry, points);
+                
+                // TODO: this temporary
+                evaluate(points, N, constraints, constraint_count, constraints_per_point, MIN_DIST,
+                    &total_violations, violations_per_point, &point_with_max_violations, &min_distance, -1, -1);
       
                 // update violations
-                for (int i = 0; i < N; i++) {
-                    violations_per_point[i] += temp_violations_per_point[i] - violations_per_point_relative[i];
-                }
+                // for (int i = 0; i < N; i++) {
+                //     violations_per_point[i] += temp_violations_per_point[i] - violations_per_point_relative[i];
+                // }
                  
                 // update check point if there is a strict improvement
                 if (local_violations_with_test < local_violations) {
-                    total_violations += local_violations_with_test - local_violations;                 
+                    // total_violations += local_violations_with_test - local_violations;                 
                     sync_broadcast_new_solution(sync, points, total_violations);
                     its_since_checkpoint = 0; 
+                    
+                    // printf("Checkpoint: %d violations\n", total_violations);
+                    break;
+                }
+                
+                if (total_violations == 0) {
+                    // printf("Found a solution! break2\n");
                     break;
                 }
 
