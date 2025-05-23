@@ -23,6 +23,7 @@ src/localizer path/to/orientation_file.or -o solution.txt
 python3 scripts/plotter.py --sol solution.txt
 ```
 
+You can try with the `examples/trivial_example.or` file! For a much cooler example, go to the **Symmetry** section at the end of this README.
 
 ## Usage
 
