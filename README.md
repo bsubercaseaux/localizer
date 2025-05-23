@@ -1,45 +1,28 @@
-# Localizer: A solver for the point realizability problem
+# Localizer: a solver for the point realizability problem
 
 The 'realizability problem' is a well-known hard problem in computational geometry, consisting of receiving a set of constraints on the relative positions of points in the plane and determining whether there exists a configuration of points in general position that satisfies all the constraints. **Localizer** is a local-search solver for this problem. In particular, **Localizer** receives a set of constraints of the form `A_(i, j, k)`, or `B_(i, j, k)`, where `A_(i, j, k)` means that point `i` is above the directed line from point `j` to point `k`, and `B_(i, j, k)` means that point `i` is below the directed line from point `j` to point `k`. Equivalently, `A_(i, j, k)` is equivalent to Knuth's CC relation (see https://link.springer.com/book/10.1007/3-540-55611-7). Formally,
 `A_(i, j, k)` imposes a constraint on points $p_i = (x_i, y_i)$, $p_j = (x_j, y_j)$, and $p_k = (x_k, y_k)$ equivalent to:
-$$
-\det \begin{pmatrix}
+```math
+\text{det} \begin{pmatrix}
 x_i & x_j & x_k \\
 y_i & y_j & y_k \\ 1 & 1 & 1 
 \end{pmatrix} > 0,
-$$
+```
 and `B_(i, j, k)` states that the determinant is strictly less than zero.
 
 ## Quick Start
 
 ```bash
 # Build the executable
-cd src
-make
+make -C ssrc
 
 # Run with an orientation file
-./localizer ../path/to/orientation_file.or
+src/localizer path/to/orientation_file.or -o solution.txt
 
 # Plot the solution
-cd ..
-python3 scripts/plotter.py --sol output.txt
+python3 scripts/plotter.py --sol solution.txt
 ```
 
-## Building
-
-```bash
-# Navigate to source directory
-cd src
-
-# Standard build (optimized)
-make
-
-# Debug build
-make debug
-
-# Clean build artifacts
-make clean
-```
 
 ## Usage
 
@@ -56,7 +39,7 @@ make clean
 | `-o`   | Output file path | output.txt |
 | `-s`   | Random seed | 42 |
 | `-r`   | Reset interval | N/A |
-| `-t`   | Number of threads | N/A |
+| `-t`   | Number of threads | 1 |
 | `-f`   | Fixed points file | N/A |
 | `-c`   | Symmetry file | N/A |
 
@@ -65,8 +48,8 @@ make clean
 The orientation file must follow these rules:
 
 1. Each line contains an "orientation" in the format `<O>(<a>, <b>, <c>)`.
-2. `<O>` must be either "A" (above), "B" (below), or "C" (collinear).
-3. The parameters `<a>`, `<b>`, `<c>` are positive integers where `a < b < c`.
+2. `<O>` must be either "A" (above), "B" (below), or "C" (collinear). "C" is not currently well supported, as collinearities are harder to deal with. This is part of the future work of this repo.
+3. The parameters `<a>`, `<b>`, `<c>` are positive integers where `1 <= a < b < c`.
 
 For example, `A(2, 4, 7)` means point `2` is above the directed line from point `4` to point `7`.
 
