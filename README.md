@@ -98,10 +98,10 @@ This is done by providing a file with the coordinates of the points to be fixed.
 
 Where `<index>` is the index of the point to be fixed (starting from 1), and `<x>` and `<y>` are the coordinates of the point. For example (corresponding to the file `examples/4fixed_pts.txt`):
 ```
-1:0.0,-100.0
-2:100.0,0.0
-3:0.0,100.0
-4:-100.0,0.0
+1:0.0,-30.0
+2:30.0,0.0
+3:0.0,30.0
+4:-30.0,0.0
 ```
 
 Try for instance
@@ -118,7 +118,7 @@ We can also provide a file specifying a desired rotational symmetry of the solut
 ...
 <indices of orbitN>
 ```
-where each line contains the indices of the points in the same orbit. For example (corresponding to the file `examples/4fold_symmetry16.txt`):
+where each line contains the indices of the points in the same orbit. For example (corresponding to the file `examples/4fold_symmetry_16.txt`):
 ```
 1 2 3 4
 5 6 7 8
@@ -127,3 +127,9 @@ where each line contains the indices of the points in the same orbit. For exampl
 ```
 enforces a 4-fold symmetry on those 16 points. Orbits can have different lengths. Concretely, these orbits are enforcing that the coordinates of the points are $$2\pi/k$$ rotated with respect to the previous point in the orbit, where $k$ is the length of the orbit. 
 
+For a nice complete example, you can
+
+```
+src/localizer examples/16-6-4fold-orientations/N_16_sol_924_208_0_2.or -c examples/4fold_symmetry_16.txt -f examples/4fixed_pts.txt -o symmetric_solution16.txt
+python3 scripts/plotter.py --sol symmetric_solution16.txt
+```
