@@ -14,7 +14,7 @@ and `B_(i, j, k)` states that the determinant is strictly less than zero.
 
 ```bash
 # Build the executable
-make -C ssrc
+make -C src
 
 # Run with an orientation file
 src/localizer path/to/orientation_file.or -o solution.txt
