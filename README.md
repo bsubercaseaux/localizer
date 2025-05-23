@@ -27,7 +27,7 @@ python3 scripts/plotter.py --sol solution.txt
 ## Usage
 
 ```bash
-./localizer <orientation_file> [-i <sub_iterations>] [-d <min_dist>] [-o <output_file>] [-s <seed>] [-r <reset_interval>] [-t <threads>] [-f <fixed_points_file>] [-c <symmetry_file>]
+localizer <orientation_file> [-i <sub_iterations>] [-d <min_dist>] [-o <output_file>] [-s <seed>] [-r <reset_interval>] [-t <threads>] [-f <fixed_points_file>] [-c <symmetry_file>]
 ```
 
 ### Command Line Options
