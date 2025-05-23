@@ -31,17 +31,6 @@ You can try with the `examples/trivial_example.or` file! For a much cooler examp
 localizer <orientation_file> [-i <sub_iterations>] [-o <output_file>] [-s <seed>] [-r <reset_interval>] [-t <threads>] [-f <fixed_points_file>] [-c <symmetry_file>]
 ```
 
-### Command Line Options
-
-| Option | Description | Default Value |
-|--------|-------------|---------------|
-| `-i`   | Sub-iterations | 10 |
-| `-o`   | Output file path | output.txt |
-| `-s`   | Random seed | 42 |
-| `-r`   | Reset interval | 30000 |
-| `-t`   | Number of threads | 1 |
-| `-f`   | Fixed points file | N/A |
-| `-c`   | Symmetry file | N/A |
 
 ## Input Format
 
@@ -53,6 +42,19 @@ The orientation file must follow these rules:
 
 For example, `A(2, 4, 7)` means point `2` is above the directed line from point `4` to point `7`.
 
+### Command Line Options
+
+| Option | Description | Default Value |
+|--------|-------------|---------------|
+| `-i`   | Sub-iterations | 10 |
+| `-o`   | Output file path | output.txt |
+| `-s`   | Random seed | 42 |
+| `-r`   | Reset interval | 30000 |
+| `-t`   | Number of threads | 1 |
+| `-f`   | Fixed points file (see below) | N/A |
+| `-c`   | Symmetry file (see below) | N/A |
+
+The number of sub-iterations indicates how many times in a row a chosen point will be moved. The reset interval indicates how many iterations without an improvement will be done before resetting the current solution.
 
 ## Visualization
 
