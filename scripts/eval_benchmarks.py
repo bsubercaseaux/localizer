@@ -8,6 +8,8 @@ import sys
 import statistics
 
 argparser = argparse.ArgumentParser()
+
+argparser.add_argument("-e", "--executable", type=str, default="localizer")
 argparser.add_argument("-b", "--build", help="Build benchmarks", action="store_true")
 argparser.add_argument("-L", type=int, default=20, help="Lower bound for N points")
 argparser.add_argument("-R", type=int, default=25, help="Upper bound for N points")
@@ -81,7 +83,7 @@ for N in range(args.L, args.R + 1):
         output_filename = f"benchmarks/{N}/{i}.output"
         output = timed_run_shell(
             [
-                "./realizer",
+                args.executable,
                 constraints_filename,
                 "-i",
                 str(args.iterations),
@@ -118,17 +120,15 @@ for N in range(args.L, args.R + 1):
 print(colored("\nSaving results to: ", "yellow"), args.output, "\n")
 with open(args.output, "w", encoding="utf-8") as f:
     for N, data_N in DATA.items():
-        # data_N_filtered = [t for t in data_N if t[2] / 1e9 < args.timeout]
+        data_N_filtered = [t for t in data_N if t[2] / 1e9 < args.timeout]
         for t in data_N:
             f.write(
                 f"{N} {t[2]/1e9:.2f}\n")
-        # if len(data_N_filtered) == 0:
-        #     f.write(f"{N} -1 {COMPLETED[N]}/{len(data_N)} 0\n")
-        #     continue
-        # avg = sum(t[2] for t in data_N_filtered) / len(data_N_filtered)
-        # print(
-        #     f'{colored("N", "cyan")} = {N}, ' \
-        #     f'{colored("avg time", "yellow")} = {avg/1e9:.2f}ms, ' \
-        #     f'{colored("completed", "green")} = {COMPLETED[N]}/{len(data_N)} '
-        # )
-        # f.write(f"{N} {avg/1e9:.2f} {COMPLETED[N]}/{len(data_N)} {statistics.stdev([t[2]/1e6 for t in data_N_filtered])}\n")
+
+        avg = sum(t[2] for t in data_N_filtered) / len(data_N_filtered)
+        print(
+            f'{colored("N", "cyan")} = {N}, ' \
+            f'{colored("avg time", "yellow")} = {avg/1e9:.2f}ms, ' \
+            f'{colored("completed", "green")} = {COMPLETED[N]}/{len(data_N)} '
+        )
+        f.write(f"{N} {avg/1e9:.2f} {COMPLETED[N]}/{len(data_N)} {statistics.stdev([t[2]/1e6 for t in data_N_filtered])}\n")

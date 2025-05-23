@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     int sub_iterations = 10;
     int NUM_THREADS = 1;
     double min_dist = -1.0; // negative -> turned off
-    long long int reset_its = 100000;
+    long long int reset_its = 30000;
     
         output_file = malloc(256 * sizeof(char));
     if (output_file != NULL) {
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
                 min_dist = atof(optarg);
                 break;
             case 'o':
-                strcpy(output_file, optarg); //, sizeof(output_file) - 1);
+                strcpy(output_file, optarg);
                 break;
             case 'r':
                 reset_its = atoi(optarg);
@@ -145,7 +145,6 @@ int main(int argc, char* argv[]) {
                 break;
             case 'f':
                 strcpy(fixed_points_file, optarg);
-                // some_fixed_points = true;
                 break;
             case 'c':
                 strcpy(symmetry_file, optarg);

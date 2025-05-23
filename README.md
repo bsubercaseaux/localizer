@@ -27,7 +27,7 @@ python3 scripts/plotter.py --sol solution.txt
 ## Usage
 
 ```bash
-localizer <orientation_file> [-i <sub_iterations>] [-d <min_dist>] [-o <output_file>] [-s <seed>] [-r <reset_interval>] [-t <threads>] [-f <fixed_points_file>] [-c <symmetry_file>]
+localizer <orientation_file> [-i <sub_iterations>] [-o <output_file>] [-s <seed>] [-r <reset_interval>] [-t <threads>] [-f <fixed_points_file>] [-c <symmetry_file>]
 ```
 
 ### Command Line Options
@@ -35,10 +35,9 @@ localizer <orientation_file> [-i <sub_iterations>] [-d <min_dist>] [-o <output_f
 | Option | Description | Default Value |
 |--------|-------------|---------------|
 | `-i`   | Sub-iterations | 10 |
-| `-d`   | Minimum distance between points | 0.25 |
 | `-o`   | Output file path | output.txt |
 | `-s`   | Random seed | 42 |
-| `-r`   | Reset interval | N/A |
+| `-r`   | Reset interval | 30000 |
 | `-t`   | Number of threads | 1 |
 | `-f`   | Fixed points file | N/A |
 | `-c`   | Symmetry file | N/A |
@@ -52,7 +51,6 @@ The orientation file must follow these rules:
 3. The parameters `<a>`, `<b>`, `<c>` are positive integers where `1 <= a < b < c`.
 
 For example, `A(2, 4, 7)` means point `2` is above the directed line from point `4` to point `7`.
-
 
 
 ## Visualization
@@ -78,5 +76,54 @@ python3 scripts/validator.py -c <constraint_file> -p <point_file>
 Execute the benchmark suite:
 
 ```bash
-python3 scripts/eval_benchmarks.py [-b] [-L <lower_N>] [-R <upper_N>] [-n <iterations>] [-t <timeout>]
+python3 scripts/eval_benchmarks.py <path to localizer executable> [-b] [-L <lower_N>] [-R <upper_N>] [-n <iterations>] [-t <timeout>] [-o <output_file>]
 ```
+
+The `-b` option builds the benchmark examples, which you can avoid if you already have run this command before, also allowing to compare against the same examples. The `-L` and `-R` options specify the range of values for the number of points `N` in the benchmarks. The `-n` option specifies the number of iterations for each benchmark, and the `-t` option specifies the timeout for each iteration. For example, to test with `N = 10...20` and `10` random cases for each `N`, run:
+
+```bash
+python3 scripts/eval_benchmarks.py src/localizer -b -L 10 -R 20 -n 10
+```
+
+## Fixing points
+
+Another feature of Localizer is the ability to fix the coordinates of some points in the solution.
+This is done by providing a file with the coordinates of the points to be fixed. The format of the file is as follows:
+
+```
+<index1>:<x1>,<y1>
+...
+<indexN>:<xN>,<yN>
+```
+
+Where `<index>` is the index of the point to be fixed (starting from 1), and `<x>` and `<y>` are the coordinates of the point. For example (corresponding to the file `examples/4fixed_pts.txt`):
+```
+1:0.0,-100.0
+2:100.0,0.0
+3:0.0,100.0
+4:-100.0,0.0
+```
+
+Try for instance
+```
+src/localizer examples/16-6-4fold-orientations/N_16_sol_924_208_0_2.or -f examples/4fixed_pts.txt
+```
+
+## Symmetry
+
+We can also provide a file specifying a desired rotational symmetry of the solution. Naturally, this symmetry must be compatible with the orientation constraints. The format of the file is as follows:
+
+```
+<indices of orbit1>
+...
+<indices of orbitN>
+```
+where each line contains the indices of the points in the same orbit. For example (corresponding to the file `examples/4fold_symmetry16.txt`):
+```
+1 2 3 4
+5 6 7 8
+9 10 11 12
+13 14 15 16
+```
+enforces a 4-fold symmetry on those 16 points. Orbits can have different lengths. Concretely, these orbits are enforcing that the coordinates of the points are $$2\pi/k$$ rotated with respect to the previous point in the orbit, where $k$ is the length of the orbit. 
+
