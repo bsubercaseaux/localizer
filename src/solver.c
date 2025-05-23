@@ -122,7 +122,6 @@ void solve(int N,
     
     // points will be sampled from a ball with exponentially increasing radius
     double final_radius = 15.0;
-    double starting_radius = final_radius / pow(1.25, sub_iterations);
     
     Point test_pts[N];
     int violations_per_point_relative[N];
