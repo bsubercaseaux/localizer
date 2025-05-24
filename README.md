@@ -79,13 +79,13 @@ python3 scripts/validator.py -c <constraint_file> -p <point_file>
 Execute the benchmark suite:
 
 ```bash
-python3 scripts/eval_benchmarks.py <path to localizer executable> [-b] [-L <lower_N>] [-R <upper_N>] [-n <iterations>] [-t <timeout>] [-o <output_file>]
+python3 scripts/eval_benchmarks.py -e <path to localizer executable> [-b] [-L <lower_N>] [-R <upper_N>] [-n <iterations>] [-t <timeout>] [-o <output_file>]
 ```
 
 The `-b` option builds the benchmark examples, which you can avoid if you already have run this command before, also allowing to compare against the same examples. The `-L` and `-R` options specify the range of values for the number of points `N` in the benchmarks. The `-n` option specifies the number of iterations for each benchmark, and the `-t` option specifies the timeout for each iteration. For example, to test with `N = 10...20` and `10` random cases for each `N`, run:
 
 ```bash
-python3 scripts/eval_benchmarks.py src/localizer -b -L 10 -R 20 -n 10
+python3 scripts/eval_benchmarks.py -e src/localizer -b -L 10 -R 20 -n 10
 ```
 
 ## Fixing points
@@ -136,3 +136,8 @@ For a nice complete example, you can
 src/localizer examples/16-6-4fold-orientations/N_16_sol_924_208_0_2.or -c examples/4fold_symmetry_16.txt -f examples/4fixed_pts.txt -o symmetric_solution16.txt
 python3 scripts/plotter.py --sol symmetric_solution16.txt
 ```
+
+## Disclaimers
+
+Localizer has been tested in MacOS (Sonoma 14.4.1) and Ubuntu 24.04.1.
+Currently, the hyperparameter `MAX_POINTS` in `src/utils.c` determines the maximum number of points supported, and it's set `81`. This helps with static memory allocation. For trying it over larger pointsets simply increase the value of `MAX_POINTS`. Conversely, performance might be ever so slightly faster by reducing it to just above the number of points you want to try it on.

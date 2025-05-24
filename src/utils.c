@@ -4,8 +4,10 @@
 #include <math.h>
 #include <time.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include "rng.c"
 
+#define __STDC_LIMIT_MACROS
 #define MAX_LINE_LENGTH 256
 
 
