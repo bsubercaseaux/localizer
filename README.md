@@ -141,3 +141,16 @@ python3 scripts/plotter.py --sol symmetric_solution16.txt
 
 Localizer has been tested in MacOS (Sonoma 14.4.1) and Ubuntu 24.04.1.
 Currently, the hyperparameter `MAX_POINTS` in `src/utils.c` determines the maximum number of points supported, and it's set `81`. This helps with static memory allocation. For trying it over larger pointsets simply increase the value of `MAX_POINTS`. Conversely, performance might be ever so slightly faster by reducing it to just above the number of points you want to try it on.
+
+
+## Additional Scripts
+
+This repository includes some additional scripts that might be useful when dealing with realizability problems. 
+
+1) A `pointset reducer` script, which takes an orientation file corresponding to points `1...N`, and two parameters `L` (lower bound) and `U` (upper bound) and produces a reduced orientation file corresponding its subset of points `L...U`. This is useful when an orientation file does not seem easily realizable, and one can use this to try to find a smaller subset of points that is not easily realizable. If one finds a subset of <= 10 points that is not easily realizable (i.e., in a couple seconds), then it actually holds that the set is truly not realizable, since we have tried realizing all pointsets of <= 10, thanks to Aichholzers database (http://www.ist.tugraz.at/staff/aichholzer/research/rp/triangulations/ordertypes/).
+
+For example, to reduce a file `7gon-6hole-test4-2.or` of 23 points, to its subset of points `7...23`, run:
+
+```
+ python3 scripts/reduce_pointsets.py -f 7gon-6hole-test4-2.or -l 7 -u 23 -o r-7-23.or
+ ```
