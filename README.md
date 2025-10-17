@@ -154,3 +154,8 @@ For example, to reduce a file `7gon-6hole-test4-2.or` of 23 points, to its subse
 ```
  python3 scripts/reduce_pointsets.py -f 7gon-6hole-test4-2.or -l 7 -u 23 -o r-7-23.or
  ```
+
+ 2) A script to run localizer over a folder, testing the realizability of all `.or` files in it, and saving the realized pointsets to corresponding `.real` files. For example, to run localizer over all `.or` files in the folder `example_orientations`, with a timeout of 3 seconds per file, run:
+ ```
+python3 scripts/run_realizer.py -f example_orientations -t 3
+ ```
